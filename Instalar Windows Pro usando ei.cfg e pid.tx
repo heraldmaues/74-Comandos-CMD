@@ -1,0 +1,21 @@
+👆 Baixe a ISO oficial da Microsoft e crie um pendrive de instalação.
+🗂️ Abra o pendrive → pasta sources.
+📝 Crie ei.cfg com o conteúdo abaixo e salve em sources (Todos os arquivos):
+
+[EditionID]
+Professional
+[Channel]
+Retail
+[VL]
+0
+
+
+🔐 Crie pid.txt em sources com sua chave legítima (substitua SUA-CHAVE-AQUI):
+
+[PID]
+Value=SUA-CHAVE-AQUI
+
+
+💾 Certifique-se de salvar sem extensão extra (usar Todos os arquivos) e em ANSI ou UTF-8 sem BOM.
+🔁 Inicialize o PC pelo pendrive e proceda com a instalação — o instalador deverá escolher o Professional; a chave será preenchida se pid.txt estiver presente.
+🌐 Depois de instalar, conecte-se à internet e verifique ativação em Configurações → Ativação.
