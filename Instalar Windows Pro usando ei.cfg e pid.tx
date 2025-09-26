@@ -13,8 +13,8 @@ Retail
 🔐 Crie pid.txt em sources com sua chave legítima (substitua SUA-CHAVE-AQUI):
 
 [PID]
-Value=SUA-CHAVE-AQUI
-
+[PID]
+Value=VK7JG-NPHTM-C97JM-9MPGT-3V66T
 
 💾 Certifique-se de salvar sem extensão extra (usar Todos os arquivos) e em ANSI ou UTF-8 sem BOM.
 🔁 Inicialize o PC pelo pendrive e proceda com a instalação — o instalador deverá escolher o Professional; a chave será preenchida se pid.txt estiver presente.
