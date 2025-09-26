@@ -1,8 +1,9 @@
-tivação do Windows e Office através do script Mass
+Ativação
 
 * Comando Powershell mencionado:
 
 Execute o Powershell como administrador e cole este comando:
+
 # Check massgrave.dev for more details
 
 Write-Host ""
@@ -19,4 +20,6 @@ if (-not $args) {
 
     Start-Process "https://massgrave.dev/"
 }
-depois_ irm https://get.activated.win | iex
+
+colar o link abaixo:
+irm https://get.activated.win | iex
