@@ -1,0 +1,128 @@
+# ---------------------------------------------
+# SCRIPT DEFINITIVO DE OTIMIZAÇÃO WINDOWS 10/11
+# ---------------------------------------------
+
+# Executar como administrador
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Warning "Execute este script como Administrador!"
+    exit
+}
+
+Write-Host "🎯 Iniciando otimizações avançadas do Windows..."
+
+# ---------------------------
+# Memória Virtual
+# ---------------------------
+$mbValue = 65536
+try {
+    $pagefile = Get-CimInstance -ClassName Win32_PageFileSetting
+    if ($pagefile) {
+        $pagefile | ForEach-Object {
+            Set-CimInstance -InputObject $_ -Property @{InitialSize=$mbValue; MaximumSize=$mbValue}
+        }
+        Write-Host "✅ Memória virtual configurada: $mbValue MB"
+    }
+} catch {
+    Write-Warning "Não foi possível configurar a memória virtual automaticamente."
+}
+
+# ---------------------------
+# Hibernação
+# ---------------------------
+powercfg -h off
+Write-Host "✅ Hibernação desativada"
+
+# ---------------------------
+# HPET desativado
+# ---------------------------
+bcdedit /set useplatformclock false
+Write-Host "✅ HPET desativado"
+
+# ---------------------------
+# Transparência e animações
+# ---------------------------
+New-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize" -Name "EnableTransparency" -PropertyType DWord -Value 0 -Force
+Write-Host "✅ Transparência desativada"
+
+# ---------------------------
+# Desativa GameBar, Cortana, Notificações, Localização e Diagnósticos
+# ---------------------------
+# GameBar
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "AppCaptureEnabled" -Value 0 -Force
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR" -Name "GameDVR_Enabled" -Value 0 -Force
+# Cortana
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Name "AllowCortana" -Value 0 -Force
+# Notificações
+New-Item -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Force | Out-Null
+Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer" -Name "NoWindowsConsumerFeatures" -Value 1 -Force
+# Localização
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\lfsvc\Service\Configuration" -Name "Status" -Value 0 -Force
+# Diagnósticos
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Name "AllowTelemetry" -Value 0 -Force
+
+Write-Host "✅ Notificações, GameBar, Cortana, localização e diagnósticos desativados"
+
+# ---------------------------
+# Plano de energia Máximo Desempenho
+# ---------------------------
+$schemeName = "Ultimate Performance"
+$scheme = powercfg -l | Where-Object {$_ -match $schemeName}
+if (-not $scheme) {
+    powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 | Out-Null
+    $scheme = powercfg -l | Where-Object {$_ -match $schemeName}
+}
+if ($scheme) {
+    $guid = ($scheme -split "\s+")[3]
+    powercfg -setactive $guid
+    Write-Host "✅ Plano de energia $schemeName ativo"
+} else {
+    Write-Warning "Não foi possível ativar nenhum plano de energia"
+}
+
+# ---------------------------
+# Todos os núcleos e ticks
+# ---------------------------
+bcdedit /set numproc 0
+bcdedit /set truncatememory 0
+Write-Host "✅ Todos os núcleos e ticks configurados"
+
+# ---------------------------
+# Desativa todos os aplicativos de inicialização (seguro)
+# ---------------------------
+# Tarefas agendadas
+Get-ScheduledTask | Where-Object {$_.TaskPath -like "\Microsoft\*"} | ForEach-Object {
+    try { Disable-ScheduledTask -TaskName $.TaskName -TaskPath $.TaskPath } catch {}
+}
+
+# Pasta de inicialização do usuário
+$startupUser = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup"
+if (Test-Path $startupUser) { Get-ChildItem $startupUser | Remove-Item -Force -Recurse }
+
+# Pasta de inicialização global
+$startupAllUsers = "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\Startup"
+if (Test-Path $startupAllUsers) { Get-ChildItem $startupAllUsers | Remove-Item -Force -Recurse }
+
+Write-Host "✅ Todos os aplicativos de inicialização desativados com segurança"
+
+# ---------------------------
+# Registros avançados para performance em jogos
+# ---------------------------
+# SystemProfile Tasks Games
+New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Force | Out-Null
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "GPU Priority" -Value 8 -Type DWord -Force
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "Priority" -Value 6 -Type DWord -Force
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "Scheduling Category" -Value "High" -Type String -Force
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games" -Name "SFIO Priority" -Value "High" -Type String -Force
+
+# DWM OverlayTestMode
+New-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\Dwm" -Name "OverlayTestMode" -Value 5 -PropertyType DWord -Force
+
+# Environment GPU Scheduler Mode
+New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment" -Name "GPU_SCHEDULER_MODE" -Value 22 -PropertyType DWord -Force
+
+Write-Host "✅ Registros avançados aplicados"
+
+# ---------------------------
+# Conclusão
+# ---------------------------
+Write-Host "🎉 Todas as otimizações aplicadas! Reinicie o computador para aplicar todas as alterações."
